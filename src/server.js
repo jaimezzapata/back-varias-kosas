@@ -1,6 +1,7 @@
 import app from './app.js';
 import { env } from './config/env.js';
 import { prisma } from './config/prisma.js';
+import { startKeepAlive } from './utils/keepAlive.js';
 
 async function startServer() {
   try {
@@ -9,6 +10,7 @@ async function startServer() {
 
     app.listen(env.PORT, () => {
       console.log(`Servidor varias-kosas escuchando en http://localhost:${env.PORT}`);
+      startKeepAlive();
     });
   } catch (error) {
     console.error('Error al iniciar el servidor:', error);
