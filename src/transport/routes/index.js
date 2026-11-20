@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../../config/prisma.js';
 import authRoutes from './auth.routes.js';
+import userRoutes from './user.routes.js';
 import publicationRoutes from './publication.routes.js';
 
 const router = Router();
@@ -19,6 +20,7 @@ router.get('/health', async (_req, res, next) => {
 });
 
 router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
 router.use('/publications', publicationRoutes);
 
 export default router;

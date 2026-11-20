@@ -25,6 +25,7 @@ export const swaggerSpec = {
   tags: [
     { name: 'Salud', description: 'Verificación de estado de la API' },
     { name: 'Autenticación', description: 'Registro, inicio de sesión (GET) y perfil' },
+    { name: 'Usuarios', description: 'Consulta de usuarios registrados' },
     { name: 'Publicaciones', description: 'CRUD de artículos publicados' },
   ],
   components: {
@@ -210,6 +211,51 @@ export const swaggerSpec = {
             },
           },
           400: { description: 'userId inválido o faltante' },
+          404: { description: 'Usuario no encontrado' },
+        },
+      },
+    },
+    '/users': {
+      get: {
+        tags: ['Usuarios'],
+        summary: 'Listar todos los usuarios registrados',
+        responses: {
+          200: {
+            description: 'Lista de usuarios',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: { type: 'array', items: { $ref: '#/components/schemas/User' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/users/{id}': {
+      get: {
+        tags: ['Usuarios'],
+        summary: 'Obtener un usuario por ID',
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 },
+        ],
+        responses: {
+          200: {
+            description: 'Detalle del usuario',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: { data: { $ref: '#/components/schemas/User' } },
+                },
+              },
+            },
+          },
+          400: { description: 'ID de usuario inválido' },
           404: { description: 'Usuario no encontrado' },
         },
       },

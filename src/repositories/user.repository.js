@@ -1,6 +1,12 @@
 import { prisma } from '../config/prisma.js';
 
 export const userRepository = {
+  findAll() {
+    return prisma.user.findMany({
+      orderBy: { id: 'asc' },
+    });
+  },
+
   findByEmail(email) {
     return prisma.user.findUnique({
       where: { email },
