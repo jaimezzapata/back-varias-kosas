@@ -2,7 +2,6 @@ import bcrypt from 'bcryptjs';
 import { userRepository } from '../repositories/user.repository.js';
 import { toUserResponse } from '../models/user.model.js';
 import { AppError } from '../utils/appError.js';
-import { signToken } from '../utils/jwt.js';
 
 export const authService = {
   async register({ name, email, password, phone, city }) {
@@ -23,15 +22,16 @@ export const authService = {
       city: city?.trim() || null,
     });
 
-    const token = signToken({ id: user.id, email: user.email });
-
     return {
       user: toUserResponse(user),
-      token,
     };
   },
 
   async login({ email, password }) {
+    if (!email || !password) {
+      throw new AppError('Correo y contraseña requeridos', 400);
+    }
+
     const normalizedEmail = email.trim().toLowerCase();
     const user = await userRepository.findByEmail(normalizedEmail);
 
@@ -44,11 +44,8 @@ export const authService = {
       throw new AppError('Credenciales inválidas', 401);
     }
 
-    const token = signToken({ id: user.id, email: user.email });
-
     return {
       user: toUserResponse(user),
-      token,
     };
   },
 

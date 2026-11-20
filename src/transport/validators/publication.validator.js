@@ -6,6 +6,7 @@ import {
 } from '../../models/publication.model.js';
 
 export const createPublicationSchema = z.object({
+  userId: z.coerce.number().int().positive('El userId es requerido'),
   title: z.string().trim().min(3, 'El título debe tener al menos 3 caracteres').max(120),
   description: z.string().trim().min(10, 'La descripción debe tener al menos 10 caracteres').max(1000),
   price: z.coerce.number().positive('El precio debe ser mayor a 0'),
@@ -22,6 +23,7 @@ export const createPublicationSchema = z.object({
 
 export const updatePublicationSchema = z
   .object({
+    userId: z.coerce.number().int().positive().optional(),
     title: z.string().trim().min(3).max(120).optional(),
     description: z.string().trim().min(10).max(1000).optional(),
     price: z.coerce.number().positive('El precio debe ser mayor a 0').optional(),

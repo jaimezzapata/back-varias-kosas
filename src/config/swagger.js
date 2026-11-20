@@ -10,7 +10,7 @@ export const swaggerSpec = {
     title: 'varias-kosas API',
     version: '1.0.0',
     description:
-      'API REST para la plataforma de compra y venta de artículos de segunda mano en excelente calidad (ropa, tecnología, hogar y más).',
+      'API REST para la plataforma de compra y venta de artículos de segunda mano en excelente calidad (sin autenticación por token).',
   },
   servers: [
     {
@@ -24,25 +24,18 @@ export const swaggerSpec = {
   ],
   tags: [
     { name: 'Salud', description: 'Verificación de estado de la API' },
-    { name: 'Autenticación', description: 'Registro, inicio de sesión y perfil' },
+    { name: 'Autenticación', description: 'Registro, inicio de sesión (GET) y perfil' },
     { name: 'Publicaciones', description: 'CRUD de artículos publicados' },
   ],
   components: {
-    securitySchemes: {
-      bearerAuth: {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-      },
-    },
     schemas: {
       User: {
         type: 'object',
         properties: {
           id: { type: 'integer', example: 1 },
           name: { type: 'string', example: 'Jaime Zapata' },
-          email: { type: 'string', format: 'email', example: 'jaime@ejemplo.com' },
-          phone: { type: 'string', nullable: true, example: '3001234567' },
+          email: { type: 'string', format: 'email', example: 'jaime@variaskosas.co' },
+          phone: { type: 'string', nullable: true, example: '3001112233' },
           city: { type: 'string', nullable: true, example: 'Medellín' },
           createdAt: { type: 'string', format: 'date-time' },
         },
@@ -76,18 +69,10 @@ export const swaggerSpec = {
         required: ['name', 'email', 'password'],
         properties: {
           name: { type: 'string', minLength: 2, maxLength: 80, example: 'Jaime Zapata' },
-          email: { type: 'string', format: 'email', example: 'jaime@ejemplo.com' },
-          password: { type: 'string', minLength: 6, maxLength: 100, example: 'secreta123' },
+          email: { type: 'string', format: 'email', example: 'jaime@variaskosas.co' },
+          password: { type: 'string', minLength: 6, maxLength: 100, example: '123456' },
           phone: { type: 'string', minLength: 7, maxLength: 20, example: '3001234567' },
           city: { type: 'string', minLength: 2, maxLength: 60, example: 'Medellín' },
-        },
-      },
-      LoginRequest: {
-        type: 'object',
-        required: ['email', 'password'],
-        properties: {
-          email: { type: 'string', format: 'email', example: 'jaime@ejemplo.com' },
-          password: { type: 'string', example: 'secreta123' },
         },
       },
       AuthResponse: {
@@ -98,15 +83,15 @@ export const swaggerSpec = {
             type: 'object',
             properties: {
               user: { $ref: '#/components/schemas/User' },
-              token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
             },
           },
         },
       },
       CreatePublicationRequest: {
         type: 'object',
-        required: ['title', 'description', 'price', 'category'],
+        required: ['userId', 'title', 'description', 'price', 'category'],
         properties: {
+          userId: { type: 'integer', example: 1 },
           title: { type: 'string', minLength: 3, maxLength: 120, example: 'Audífonos Sony WH-1000XM4' },
           description: {
             type: 'string',
@@ -123,6 +108,7 @@ export const swaggerSpec = {
       UpdatePublicationRequest: {
         type: 'object',
         properties: {
+          userId: { type: 'integer', example: 1, description: 'Opcional: valida propiedad si se envía' },
           title: { type: 'string', minLength: 3, maxLength: 120 },
           description: { type: 'string', minLength: 10, maxLength: 1000 },
           price: { type: 'number', minimum: 0.01 },
@@ -154,11 +140,9 @@ export const swaggerSpec = {
     '/health': {
       get: {
         tags: ['Salud'],
-        summary: 'Verificar estado de la API',
+        summary: 'Verificar estado de la API y base de datos',
         responses: {
-          200: {
-            description: 'Servicio operativo',
-          },
+          200: { description: 'Servicio operativo' },
         },
       },
     },
@@ -187,17 +171,13 @@ export const swaggerSpec = {
       },
     },
     '/auth/login': {
-      post: {
+      get: {
         tags: ['Autenticación'],
-        summary: 'Iniciar sesión y obtener token JWT',
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: { $ref: '#/components/schemas/LoginRequest' },
-            },
-          },
-        },
+        summary: 'Iniciar sesión con GET (sin token)',
+        parameters: [
+          { name: 'email', in: 'query', required: true, schema: { type: 'string', format: 'email' }, example: 'jaime@variaskosas.co' },
+          { name: 'password', in: 'query', required: true, schema: { type: 'string' }, example: '123456' },
+        ],
         responses: {
           200: {
             description: 'Inicio de sesión exitoso',
@@ -205,6 +185,7 @@ export const swaggerSpec = {
               'application/json': { schema: { $ref: '#/components/schemas/AuthResponse' } },
             },
           },
+          400: { description: 'Correo y contraseña requeridos' },
           401: { description: 'Credenciales inválidas', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
         },
       },
@@ -212,8 +193,10 @@ export const swaggerSpec = {
     '/auth/me': {
       get: {
         tags: ['Autenticación'],
-        summary: 'Obtener el perfil del usuario autenticado',
-        security: [{ bearerAuth: [] }],
+        summary: 'Obtener el perfil de un usuario por userId',
+        parameters: [
+          { name: 'userId', in: 'query', required: true, schema: { type: 'integer' }, example: 1 },
+        ],
         responses: {
           200: {
             description: 'Perfil del usuario',
@@ -226,7 +209,8 @@ export const swaggerSpec = {
               },
             },
           },
-          401: { description: 'No autorizado' },
+          400: { description: 'userId inválido o faltante' },
+          404: { description: 'Usuario no encontrado' },
         },
       },
     },
@@ -259,8 +243,7 @@ export const swaggerSpec = {
       },
       post: {
         tags: ['Publicaciones'],
-        summary: 'Crear una nueva publicación',
-        security: [{ bearerAuth: [] }],
+        summary: 'Crear una nueva publicación (sin token)',
         requestBody: {
           required: true,
           content: {
@@ -285,16 +268,15 @@ export const swaggerSpec = {
             },
           },
           400: { description: 'Datos inválidos' },
-          401: { description: 'No autorizado' },
         },
       },
     },
     '/publications/mine': {
       get: {
         tags: ['Publicaciones'],
-        summary: 'Listar únicamente las publicaciones del usuario autenticado',
-        security: [{ bearerAuth: [] }],
+        summary: 'Listar publicaciones de un usuario por userId',
         parameters: [
+          { name: 'userId', in: 'query', required: true, schema: { type: 'integer' }, example: 1 },
           { name: 'category', in: 'query', schema: { type: 'string', enum: PUBLICATION_CATEGORIES } },
           { name: 'condition', in: 'query', schema: { type: 'string', enum: PUBLICATION_CONDITIONS } },
           { name: 'status', in: 'query', schema: { type: 'string', enum: PUBLICATION_STATUSES } },
@@ -302,7 +284,7 @@ export const swaggerSpec = {
         ],
         responses: {
           200: {
-            description: 'Publicaciones del usuario autenticado',
+            description: 'Publicaciones del usuario',
             content: {
               'application/json': {
                 schema: {
@@ -314,7 +296,7 @@ export const swaggerSpec = {
               },
             },
           },
-          401: { description: 'No autorizado' },
+          400: { description: 'userId inválido o faltante' },
         },
       },
     },
@@ -343,8 +325,7 @@ export const swaggerSpec = {
       },
       put: {
         tags: ['Publicaciones'],
-        summary: 'Actualizar una publicación propia (PUT)',
-        security: [{ bearerAuth: [] }],
+        summary: 'Actualizar una publicación (PUT)',
         parameters: [
           { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
         ],
@@ -359,15 +340,13 @@ export const swaggerSpec = {
         responses: {
           200: { description: 'Publicación actualizada exitosamente' },
           400: { description: 'Datos o ID inválidos' },
-          401: { description: 'No autorizado' },
           403: { description: 'Sin permiso para editar esta publicación' },
           404: { description: 'Publicación no encontrada' },
         },
       },
       patch: {
         tags: ['Publicaciones'],
-        summary: 'Actualizar parcialmente una publicación propia (PATCH)',
-        security: [{ bearerAuth: [] }],
+        summary: 'Actualizar parcialmente una publicación (PATCH)',
         parameters: [
           { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
         ],
@@ -382,22 +361,20 @@ export const swaggerSpec = {
         responses: {
           200: { description: 'Publicación actualizada exitosamente' },
           400: { description: 'Datos o ID inválidos' },
-          401: { description: 'No autorizado' },
           403: { description: 'Sin permiso para editar esta publicación' },
           404: { description: 'Publicación no encontrada' },
         },
       },
       delete: {
         tags: ['Publicaciones'],
-        summary: 'Eliminar una publicación propia',
-        security: [{ bearerAuth: [] }],
+        summary: 'Eliminar una publicación',
         parameters: [
           { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
+          { name: 'userId', in: 'query', required: false, schema: { type: 'integer' }, description: 'Opcional: valida propiedad si se envía' },
         ],
         responses: {
           200: { description: 'Publicación eliminada exitosamente' },
           400: { description: 'ID inválido' },
-          401: { description: 'No autorizado' },
           403: { description: 'Sin permiso para eliminar esta publicación' },
           404: { description: 'Publicación no encontrada' },
         },

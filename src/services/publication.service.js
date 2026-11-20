@@ -37,7 +37,7 @@ export const publicationService = {
       throw new AppError('Publicación no encontrada', 404);
     }
 
-    if (existing.userId !== userId) {
+    if (userId !== undefined && existing.userId !== userId) {
       throw new AppError('No tienes permiso para editar esta publicación', 403);
     }
 
@@ -60,7 +60,7 @@ export const publicationService = {
       throw new AppError('Publicación no encontrada', 404);
     }
 
-    if (existing.userId !== userId) {
+    if (userId !== undefined && existing.userId !== userId) {
       throw new AppError('No tienes permiso para eliminar esta publicación', 403);
     }
 
